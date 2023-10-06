@@ -1,8 +1,8 @@
 package hail
 
 import (
+	"github.com/google/uuid"
 	"github.com/lesismal/nbio/nbhttp/websocket"
-	uuid "github.com/satori/go.uuid"
 	"net/http"
 	"sync"
 )
@@ -110,7 +110,7 @@ func (h *Hail) AddConnect(w http.ResponseWriter, r *http.Request, keys map[strin
 		open:       true,
 		rwMutex:    &sync.RWMutex{},
 		keyMutex:   &sync.RWMutex{},
-		hashID:     uuid.NewV4().String(),
+		hashID:     uuid.NewString(),
 	}
 
 	err := session.start(w, r)
