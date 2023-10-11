@@ -2,6 +2,7 @@ package hail
 
 import (
 	bytes2 "bytes"
+	"errors"
 	"github.com/lesismal/nbio/nbhttp/websocket"
 	"net"
 	"net/http"
@@ -20,6 +21,7 @@ type Session struct {
 	open       bool
 	hashID     string
 	rwMutex    *sync.RWMutex
+	subChan    chan *box
 }
 
 func (s *Session) start(w http.ResponseWriter, r *http.Request) error {
@@ -82,6 +84,7 @@ func (s *Session) Close() {
 		s.open = false
 		s.conn.Close()
 		close(s.outputDone)
+		s.hail.pubSub.Unsub(s.subChan)
 	}
 }
 
@@ -213,6 +216,34 @@ func (s *Session) GetHashID() string {
 	return s.hashID
 }
 
+// AddSub 訂閱某個,多個topic (Session subscribe one or multi topics)
+func (s *Session) AddSub(topicNames ...string) {
+	if s.subChan != nil {
+		s.hail.pubSub.AddSub(s.subChan, topicNames...)
+	} else {
+		var str = ""
+		for _, topicName := range topicNames {
+			str += topicName + ","
+		}
+		str = str[0 : len(str)-1]
+		s.hail.errorHandler(s, errors.New("error of add current channel,"+str))
+	}
+}
+
+// UnSub (Session unsubscribe one or multi topics, if no topics ,will unsubscribe all topics)
+func (s *Session) UnSub(topicNames ...string) {
+	if s.subChan != nil {
+		s.hail.pubSub.Unsub(s.subChan, topicNames...)
+	} else {
+		var str = ""
+		for _, topicName := range topicNames {
+			str += topicName + ","
+		}
+		str = str[0 : len(str)-1]
+		s.hail.errorHandler(s, errors.New("error of unsub current channel,"+str))
+	}
+}
+
 func (s *Session) run() {
 	ticker := time.NewTicker(s.hail.Option.PingPeriod)
 	defer ticker.Stop()
@@ -221,7 +252,6 @@ loop:
 	for {
 		select {
 		case msg, ok := <-s.output:
-
 			if !ok {
 				break loop
 			}
@@ -244,7 +274,27 @@ loop:
 			if msg.t == websocket.BinaryMessage {
 				s.hail.messageSentHandlerBinary(s, msg.msg)
 			}
+		case msg, ok := <-s.subChan:
+			if !ok {
+				break loop
+			}
+			err := s.writeRaw(msg)
+			if err != nil {
+				s.hail.errorHandler(s, err)
+				break loop
+			}
 
+			if msg.t == websocket.CloseMessage {
+				break loop
+			}
+
+			if msg.t == websocket.TextMessage {
+				s.hail.messageSentHandler(s, msg.msg)
+			}
+
+			if msg.t == websocket.BinaryMessage {
+				s.hail.messageSentHandlerBinary(s, msg.msg)
+			}
 		case <-ticker.C:
 			s.ping()
 		case _, ok := <-s.outputDone:

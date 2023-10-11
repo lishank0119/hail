@@ -25,6 +25,7 @@ type Hail struct {
 	disconnectHandler        handleSessionFunc
 	pongHandler              handleSessionFunc
 	hub                      *hub
+	pubSub                   *pubSub
 }
 
 func New(o *Option) *Hail {
@@ -46,6 +47,7 @@ func New(o *Option) *Hail {
 		disconnectHandler:        func(*Session) {},
 		pongHandler:              func(*Session) {},
 		hub:                      hub,
+		pubSub:                   pubSubNew(o.ChannelBufferSize),
 	}
 
 }
@@ -111,6 +113,7 @@ func (h *Hail) AddConnect(w http.ResponseWriter, r *http.Request, keys map[strin
 		rwMutex:    &sync.RWMutex{},
 		keyMutex:   &sync.RWMutex{},
 		hashID:     uuid.NewString(),
+		subChan:    h.pubSub.Sub("default"),
 	}
 
 	err := session.start(w, r)
@@ -214,4 +217,34 @@ func (h *Hail) CloseSessionBinaryFilter(msg []byte, fn func(*Session) bool) erro
 	h.hub.closeSession <- message
 
 	return nil
+}
+
+// PubMsg Publish Message To Session Subscribe （向下相容）
+func (h *Hail) PubMsg(msg []byte, isAsync bool, topics ...string) {
+	message := &box{t: websocket.TextMessage, msg: msg}
+	if isAsync {
+		h.pubSub.AsyncPub(message, topics...)
+	} else {
+		h.pubSub.Pub(message, topics...)
+	}
+}
+
+// PubTextMsg Publish Message To Session Subscribe
+func (h *Hail) PubTextMsg(msg []byte, isAsync bool, topics ...string) {
+	message := &box{t: websocket.TextMessage, msg: msg}
+	if isAsync {
+		h.pubSub.AsyncPub(message, topics...)
+	} else {
+		h.pubSub.Pub(message, topics...)
+	}
+}
+
+// PubBinaryMsg Publish Message To Session Subscribe
+func (h *Hail) PubBinaryMsg(msg []byte, isAsync bool, topics ...string) {
+	message := &box{t: websocket.BinaryMessage, msg: msg}
+	if isAsync {
+		h.pubSub.AsyncPub(message, topics...)
+	} else {
+		h.pubSub.Pub(message, topics...)
+	}
 }

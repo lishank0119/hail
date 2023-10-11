@@ -1,29 +1,3 @@
-# Hail
-
-Hail is websocket framework based on [nbio](https://github.com/lesismal/nbio)
-and [melody](https://github.com/olahol/melody) that abstracts away the tedious parts of handling websockets. It gets out
-of your way so you can write real-time apps.
-
-## Features
-
-* [x] Clear and easy interface similar to nbio.
-* [x] A simple way to broadcast to all or selected connected sessions.
-* [x] Message buffers making concurrent writing safe.
-* [x] Automatic handling of sending ping/pong heartbeats that timeout broken sessions.
-* [x] Store data on sessions.
-* [x] Pub/Sub.
-* [x] close some sessions.
-
-## Install
-
-```
-go get github.com/lishank0119/hail
-```
-
-## Example
-
-```go
-
 package main
 
 import (
@@ -31,17 +5,24 @@ import (
 	"flag"
 	"fmt"
 	"github.com/lesismal/nbio/nbhttp"
-	"hail"
+	"github.com/lishank0119/hail"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 )
 
+var textTopic = "topic1"
+var binaryTopic = "topic2"
+
 func main() {
 	flag.Parse()
 
-	h := hail.New(&hail.Option{})
+	h := hail.New(&hail.Option{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	})
 
 	mux := &http.ServeMux{}
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
@@ -51,7 +32,10 @@ func main() {
 	})
 
 	h.HandleConnect(func(session *hail.Session) {
-		fmt.Println("HandleConnect", session.GetHashID())
+		id := session.GetHashID()
+		fmt.Println("HandleConnect", id)
+		session.AddSub(textTopic)
+		session.AddSub(binaryTopic)
 	})
 
 	h.HandleMessage(func(session *hail.Session, bytes []byte) {
@@ -90,6 +74,20 @@ func main() {
 		return
 	}
 
+	go func() {
+		for {
+			// PubMsg is Send TextMessage
+			h.PubMsg([]byte("this is a text message."), false, textTopic)
+
+			// PubTextMsg is Send TextMessage (Same to PubMsg)
+			h.PubTextMsg([]byte("this is a text message."), false, textTopic)
+
+			// PubBinaryMsg is Send BinaryMessage
+			h.PubBinaryMsg([]byte("this is an binary message."), false, binaryTopic)
+			time.Sleep(5 * time.Second)
+		}
+	}()
+
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
 	<-interrupt
@@ -101,26 +99,3 @@ func main() {
 var addrs = []string{
 	":8888",
 }
-
-```
-
-## Contributors
-
-<a href="https://github.com/lishank0119/hail/graphs/contributors">
-	<img src="https://contrib.rocks/image?repo=lishank0119/hail" />
-</a>
-
-## FAQ
-
-If you are getting a `403` when trying to connect to your websocket you
-can [change allow all origin hosts](http://godoc.org/github.com/gorilla/websocket#hdr-Origin_Considerations):
-
-```go
-hail.New(&hail.Option{
-CheckOrigin: func (r *http.Request) bool {
-return true
-},
-})
-```
-
-<a href='https://ko-fi.com/Z8Z7GSFJE' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
