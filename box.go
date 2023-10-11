@@ -7,10 +7,3 @@ type box struct {
 	msg    []byte
 	filter filterFunc
 }
-
-type closeSession struct {
-	t               websocket.MessageType
-	key             string
-	value           interface{}
-	keepSessionHash string
-}

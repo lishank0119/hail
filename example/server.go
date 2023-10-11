@@ -29,7 +29,14 @@ func main() {
 	})
 
 	h.HandleConnect(func(session *hail.Session) {
-		fmt.Println("HandleConnect", session.GetHashID())
+		id := session.GetHashID()
+		fmt.Println("HandleConnect", id)
+		time.AfterFunc(5*time.Second, func() {
+			h.CloseSessionFilter([]byte("close session"), func(s *hail.Session) bool {
+				return s.GetHashID() == id
+			})
+		})
+
 	})
 
 	h.HandleMessage(func(session *hail.Session, bytes []byte) {

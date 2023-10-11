@@ -1,17 +1,21 @@
 # Hail
-Hail is websocket framework based on [nbio](https://github.com/lesismal/nbio) and [melody](https://github.com/olahol/melody) that abstracts away the tedious parts of handling websockets. It gets out of your way so you can write real-time apps.
+
+Hail is websocket framework based on [nbio](https://github.com/lesismal/nbio)
+and [melody](https://github.com/olahol/melody) that abstracts away the tedious parts of handling websockets. It gets out
+of your way so you can write real-time apps.
 
 ## Features
+
 * [x] Clear and easy interface similar to nbio.
 * [x] A simple way to broadcast to all or selected connected sessions.
 * [x] Message buffers making concurrent writing safe.
 * [x] Automatic handling of sending ping/pong heartbeats that timeout broken sessions.
 * [x] Store data on sessions.
 * [ ] Pub/Sub.
-* [ ] close some sessions.
-
+* [x] close some sessions.
 
 ## Install
+
 ```
 go get github.com/lishank0119/hail
 ```
@@ -101,20 +105,21 @@ var addrs = []string{
 ```
 
 ## Contributors
+
 <a href="https://github.com/lishank0119/hail/graphs/contributors">
 	<img src="https://contrib.rocks/image?repo=lishank0119/hail" />
 </a>
 
-
 ## FAQ
 
-If you are getting a `403` when trying  to connect to your websocket you can [change allow all origin hosts](http://godoc.org/github.com/gorilla/websocket#hdr-Origin_Considerations):
+If you are getting a `403` when trying to connect to your websocket you
+can [change allow all origin hosts](http://godoc.org/github.com/gorilla/websocket#hdr-Origin_Considerations):
 
 ```go
 hail.New(&hail.Option{
-    CheckOrigin: func(r *http.Request) bool {
-        return true
-    },
+CheckOrigin: func (r *http.Request) bool {
+return true
+},
 })
 ```
 

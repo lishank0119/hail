@@ -30,7 +30,7 @@ type Hail struct {
 func New(o *Option) *Hail {
 	o.reset()
 
-	hub := newHub()
+	hub := newHub(o)
 
 	go hub.run()
 
@@ -168,6 +168,50 @@ func (h *Hail) BroadcastBinaryFilter(msg []byte, fn func(*Session) bool) error {
 
 	message := &box{t: websocket.BinaryMessage, msg: msg, filter: fn}
 	h.hub.broadcast <- message
+
+	return nil
+}
+
+func (h *Hail) CloseAllSession(msg []byte) error {
+	if h.hub.closed() {
+		return ErrClose
+	}
+
+	message := &box{t: websocket.TextMessage, msg: msg}
+	h.hub.closeSession <- message
+
+	return nil
+}
+
+func (h *Hail) CloseSessionFilter(msg []byte, fn func(*Session) bool) error {
+	if h.hub.closed() {
+		return ErrClose
+	}
+
+	message := &box{t: websocket.TextMessage, msg: msg, filter: fn}
+	h.hub.closeSession <- message
+
+	return nil
+}
+
+func (h *Hail) CloseAllSessionBinary(msg []byte) error {
+	if h.hub.closed() {
+		return ErrClose
+	}
+
+	message := &box{t: websocket.BinaryMessage, msg: msg}
+	h.hub.closeSession <- message
+
+	return nil
+}
+
+func (h *Hail) CloseSessionBinaryFilter(msg []byte, fn func(*Session) bool) error {
+	if h.hub.closed() {
+		return ErrClose
+	}
+
+	message := &box{t: websocket.BinaryMessage, msg: msg, filter: fn}
+	h.hub.closeSession <- message
 
 	return nil
 }
