@@ -44,9 +44,9 @@ func main() {
 		fmt.Println("HandleMessage", session.GetHashID(), string(bytes))
 	})
 
-	h.HandleClose(func(session *hail.Session, err error) {
-		fmt.Println("HandleClose", session.GetHashID())
-	})
+	//h.HandleClose(func(session *hail.Session, err error) {
+	//	fmt.Println("HandleClose", session.GetHashID())
+	//})
 
 	h.HandleMessageBinary(func(session *hail.Session, bytes []byte) {
 		session.WriteBinary(bytes)

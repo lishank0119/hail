@@ -9,7 +9,7 @@ import (
 
 type handleMessageFunc func(*Session, []byte)
 type handleErrorFunc func(*Session, error)
-type handleCloseFunc func(*Session, error)
+type handleCloseFunc func(*Session, int, string)
 type handleSessionFunc func(*Session)
 type filterFunc func(*Session) bool
 
@@ -92,7 +92,7 @@ func (h *Hail) HandleError(fn func(*Session, error)) {
 	h.errorHandler = fn
 }
 
-func (h *Hail) HandleClose(fn func(*Session, error)) {
+func (h *Hail) HandleClose(fn func(*Session, int, string)) {
 	if fn != nil {
 		h.closeHandler = fn
 	}

@@ -35,6 +35,12 @@ func (s *Session) start(w http.ResponseWriter, r *http.Request) error {
 		s.hail.pongHandler(s)
 	})
 
+	if s.hail.closeHandler != nil {
+		u.SetCloseHandler(func(conn *websocket.Conn, i int, msg string) {
+			s.hail.closeHandler(s, i, msg)
+		})
+	}
+
 	u.OnOpen(func(conn *websocket.Conn) {
 		s.hail.connectHandler(s)
 	})
@@ -46,7 +52,6 @@ func (s *Session) start(w http.ResponseWriter, r *http.Request) error {
 
 		s.Close()
 		s.hail.disconnectHandler(s)
-		s.hail.closeHandler(s, err)
 	})
 
 	u.OnMessage(func(c *websocket.Conn, messageType websocket.MessageType, bytes []byte) {
