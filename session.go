@@ -29,9 +29,6 @@ func (s *Session) start(w http.ResponseWriter, r *http.Request) error {
 
 	u.SetPongHandler(func(c *websocket.Conn, text string) {
 		c.SetReadDeadline(time.Now().Add(s.hail.Option.PongWait))
-		if !s.hail.hub.closed() {
-			s.hail.hub.unregister <- s
-		}
 		s.hail.pongHandler(s)
 	})
 
