@@ -45,7 +45,7 @@ func main() {
 		fmt.Println("HandleMessage", session.GetHashID(), string(bytes))
 	})
 
-	h.HandleClose(func(session *hail.Session, err error) {
+	h.HandleClose(func(session *hail.Session, i int, s string) {
 		fmt.Println("HandleClose", session.GetHashID())
 	})
 
